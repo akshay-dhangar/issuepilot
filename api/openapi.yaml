@@ -1,0 +1,89 @@
+openapi: 3.0.3
+info:
+  title: IssuePilot local demo API
+  version: 0.1.0
+  description: Trusted, bundled Go fixture only. No arbitrary repositories or autonomous publication.
+servers:
+  - url: http://127.0.0.1:8080
+paths:
+  /healthz:
+    get:
+      responses:
+        '200':
+          description: Process is alive (not a database readiness probe).
+  /v1/runs:
+    post:
+      summary: Queue a deterministic demonstration run
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [scenario]
+              properties:
+                scenario:
+                  type: string
+                  enum: [empty-average]
+      responses:
+        '202':
+          description: Queued; Location points to the run resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '400':
+          description: Invalid JSON, unknown fields, or unsupported scenario.
+        '413':
+          description: Request exceeds 4096 bytes.
+        '503':
+          description: Persistence unavailable.
+  /v1/runs/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Current run and execution evidence.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '404':
+          description: Run not found.
+        '503':
+          description: Persistence unavailable.
+components:
+  schemas:
+    Run:
+      type: object
+      required: [id, scenario, status, created_at, updated_at, events]
+      properties:
+        id: {type: string}
+        scenario: {type: string, enum: [empty-average]}
+        status:
+          type: string
+          enum: [queued, investigating, reproducing, editing, verifying, awaiting_review, failed]
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        error: {type: string}
+        events:
+          type: array
+          items:
+            type: object
+            required: [at, status, message]
+            properties:
+              at: {type: string, format: date-time}
+              status: {type: string}
+              message: {type: string}
+        evidence:
+          type: object
+          properties:
+            baseline: {type: string}
+            reproduction: {type: string}
+            verification: {type: string}
+            patch: {type: string}
