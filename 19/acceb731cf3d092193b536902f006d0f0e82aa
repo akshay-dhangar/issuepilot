@@ -1,0 +1,65 @@
+.env.example
+  s_eb0b26e52cc031::t_bb84125394a097 1-4
+.github/workflows/ci.yml
+  s_eb0b26e52cc031::t_d9a3765e8d9ef5 1-28
+.gitignore
+  s_eb0b26e52cc031::t_c0b8fb9fb356fc 1-3
+Makefile
+  s_eb0b26e52cc031::t_3dbf179ee5a04d 1-8
+PROGRESS.md
+  s_eb0b26e52cc031::t_3abf969865b6c9 1-24
+README.md
+  s_eb0b26e52cc031::t_ca4470f33b24cb 1-110
+api/openapi.yaml
+  s_eb0b26e52cc031::t_d35b66cefe6129 1-89
+cmd/server/main.go
+  s_eb0b26e52cc031::t_7d7306e24e1334 1-81
+compose.yaml
+  s_eb0b26e52cc031::t_49c65260d76624 1-18
+go.mod
+  s_90026bd1685103::t_97368f7ce02cde 1-14
+go.sum
+  s_90026bd1685103::t_d4b771499e06dc 1-28
+internal/httpapi/api.go
+  s_eb0b26e52cc031::t_11c7b45db1fa26 1-75
+internal/httpapi/api_test.go
+  s_eb0b26e52cc031::t_597447c8d656c6 1-49
+internal/runner/demo.go
+  s_eb0b26e52cc031::t_4d3654f4e337e4 1-103
+internal/runner/demo_test.go
+  s_eb0b26e52cc031::t_d5c001e53fde4c 1-34
+internal/runner/worker.go
+  s_eb0b26e52cc031::t_69799d37c505a2 1-48
+internal/runs/memory.go
+  s_eb0b26e52cc031::t_b6a09d9a36c523 1-67
+internal/runs/model.go
+  s_eb0b26e52cc031::t_cea890467c622a 1-74
+internal/runs/postgres.go
+  s_eb0b26e52cc031::t_59ebc38ac6a126 1-155
+internal/runs/store_test.go
+  s_eb0b26e52cc031::t_f666fa5f136640 1-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "19acceb731cf3d092193b536902f006d0f0e82aa",
+  "prompts": {},
+  "sessions": {
+    "s_90026bd1685103": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "01a187ba-22aa-7793-8324-39d8f75719e0",
+        "model": "unknown"
+      },
+      "human_author": "Akshay Dhangar <48667712+akshay-dhangar@users.noreply.github.com>"
+    },
+    "s_eb0b26e52cc031": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a187ba-22aa-7793-8324-39d8f75719e0",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Akshay Dhangar <48667712+akshay-dhangar@users.noreply.github.com>"
+    }
+  }
+}
