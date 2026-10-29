@@ -26,3 +26,7 @@ jobs:
       - run: go test -race ./...
         env:
           TEST_DATABASE_URL: postgres://issuepilot:localdev@localhost:5432/issuepilot_test?sslmode=disable
+      - run: docker pull golang@sha256:56961d79ea8129efddcc0b8643fd8a5416b4e6228cfd477e3fd61deb2672c587
+      - run: go test -race ./internal/sandbox -v
+        env:
+          TEST_DOCKER: '1'

@@ -2,7 +2,9 @@
 
 A Go-based issue-to-PR assistant, starting with an honest, executable workflow foundation.
 
-**Current status: local deterministic demo, not yet an AI coding agent.** The bundled fixture reproduces a divide-by-zero bug, applies a known patch, and runs real Go tests. No model API, arbitrary repository execution, GitHub write, or PR publication is implemented.
+**Current status: deterministic workflow demo plus a Docker-isolated repository test runner, not yet an AI coding agent.** The bundled fixture reproduces a divide-by-zero bug, applies a known patch, and runs real Go tests. A separate CLI can test a pinned commit from an explicitly selected local Go repository in Docker. No model API, GitHub App, or PR publication is implemented.
+
+See [the repository runner guide](docs/RUNNER.md) for the CLI, isolation limits, and integration tests.
 
 ## Run locally
 
@@ -60,7 +62,7 @@ The worker:
 
 Each run has a two-minute budget and each test invocation a 30-second timeout. The child environment excludes application credentials and disables dependency downloads. The fixture has no third-party dependencies. A shared temporary Go build cache speeds repeated demos.
 
-**The local fixture executor is not a sandbox.** Never extend it to accept user source or repository URLs. Arbitrary repository execution requires the planned isolated runner first.
+**The local fixture executor is not a sandbox.** Never extend it to accept user source or repository URLs. Repository tests must use the separate Docker runner described above.
 
 ## API and layout
 
@@ -72,6 +74,8 @@ The contract is in [`api/openapi.yaml`](api/openapi.yaml).
 
 ```text
 cmd/server          HTTP server, shutdown, worker lifecycle
+cmd/issuepilot      Pinned repository test CLI
+internal/sandbox    Snapshot validation and Docker execution
 internal/httpapi    Request validation and JSON API
 internal/runs       State machine, memory and PostgreSQL stores
 internal/runner     Trusted demonstration fixture and worker
@@ -98,8 +102,10 @@ Tests cover invalid request bodies, missing runs, state-transition guards, concu
 
 ## Next milestones
 
-- [ ] Isolated Docker runner on a dedicated VM: resource limits, restricted network, no host credentials/socket, pinned execution images.
-- [ ] Read-only checkout of explicitly connected Go repositories at a recorded commit.
+- [x] Local Docker runner: resource limits, disabled network, no host credentials/socket, pinned image.
+- [ ] Dedicated disposable runner VMs before public/untrusted use.
+- [x] Read-only snapshot of a selected local Go repository at an exact commit.
+- [ ] GitHub-connected repository acquisition.
 - [ ] Model-provider interface and bounded investigate/edit/verify tool loop.
 - [ ] Independent verification tests and a reproducible evaluation suite.
 - [ ] Durable checkpoints, cancellation API, idempotency keys, queue admission limits.
