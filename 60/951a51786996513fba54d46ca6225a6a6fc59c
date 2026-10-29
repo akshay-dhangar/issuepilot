@@ -1,0 +1,52 @@
+PROGRESS.md
+  s_eb0b26e52cc031::t_d772120c548b81 3,9-13,17-27,31,33
+internal/sandbox/snapshot.go
+  s_90026bd1685103::t_5cfc023f8794df 1-58,71-150
+  s_90026bd1685103::t_f3f5288c43ad1c 59-70
+docs/RUNNER.md
+  s_90026bd1685103::t_ecd65343a54b6f 1-53
+.gitignore
+  s_90026bd1685103::t_f3f5288c43ad1c 4-6
+internal/sandbox/docker.go
+  s_90026bd1685103::t_b1e34f7b834ca8 112
+  s_90026bd1685103::t_5cfc023f8794df 1-111,113-139
+internal/sandbox/docker_test.go
+  s_90026bd1685103::t_5cfc023f8794df 1-51,55-82
+  s_90026bd1685103::t_b1e34f7b834ca8 52-54
+internal/sandbox/snapshot_test.go
+  s_90026bd1685103::t_5cfc023f8794df 1-92,94-99
+  s_90026bd1685103::t_b1e34f7b834ca8 93
+internal/sandbox/image.go
+  s_eb0b26e52cc031::t_57b2c51df571f3 3-4
+  s_eb0b26e52cc031::t_50e567728c3b62 1-2
+README.md
+  s_90026bd1685103::t_ecd65343a54b6f 5-7,65,77-78,105-108
+cmd/issuepilot/main.go
+  s_90026bd1685103::t_5cfc023f8794df 1-49
+.github/workflows/ci.yml
+  s_90026bd1685103::t_ecd65343a54b6f 29-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "60951a51786996513fba54d46ca6225a6a6fc59c",
+  "prompts": {},
+  "sessions": {
+    "s_90026bd1685103": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "01a187ba-22aa-7793-8324-39d8f75719e0",
+        "model": "unknown"
+      },
+      "human_author": "Akshay Dhangar <48667712+akshay-dhangar@users.noreply.github.com>"
+    },
+    "s_eb0b26e52cc031": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a187ba-22aa-7793-8324-39d8f75719e0",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Akshay Dhangar <48667712+akshay-dhangar@users.noreply.github.com>"
+    }
+  }
+}
