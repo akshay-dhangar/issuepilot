@@ -99,3 +99,38 @@ func TestPostgresPersistenceAndRecovery(t *testing.T) {
 		t.Fatalf("recovered status: %s", got.Status)
 	}
 }
+
+func TestPostgresQueuedRepairSurvivesRestart(t *testing.T) {
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("TEST_DATABASE_URL not set")
+	}
+	ctx := context.Background()
+	db, err := OpenPostgres(ctx, url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if db != nil {
+			db.Close()
+		}
+	}()
+	r := NewRepair(RepairRequest{Repository: "sample", Commit: "pinned", Issue: "fix", Model: "chosen-model"})
+	if err = db.Create(ctx, r); err != nil {
+		t.Fatal(err)
+	}
+	db.Close()
+	db = nil
+	db, err = OpenPostgres(ctx, url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _, _ = db.pool.Exec(ctx, "DELETE FROM runs WHERE id=$1", r.ID) }()
+	if err = db.Recover(ctx); err != nil {
+		t.Fatal(err)
+	}
+	got, err := db.Get(ctx, r.ID)
+	if err != nil || got.Status != Queued || got.Repair == nil || *got.Repair != *r.Repair {
+		t.Fatalf("queued repair changed on restart: %v", err)
+	}
+}

@@ -47,6 +47,7 @@ type Engine struct {
 	Provider    model.Provider
 	Tester      Tester
 	MaxAttempts int
+	Observe     func(string) error
 }
 
 func (e Engine) Run(ctx context.Context, repository, commit, issue string) (report Report, err error) {
@@ -55,6 +56,9 @@ func (e Engine) Run(ctx context.Context, repository, commit, issue string) (repo
 		report.FinishedAt = time.Now().UTC()
 		if err != nil {
 			report.Error = err.Error()
+			report.Status = "failed"
+			report.Patch = ""
+			report.PatchSHA256 = ""
 		}
 	}()
 	if e.Provider == nil || e.Tester == nil {
@@ -68,7 +72,13 @@ func (e Engine) Run(ctx context.Context, repository, commit, issue string) (repo
 	}
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
-	note := func(message string) { report.Events = append(report.Events, message) }
+	note := func(message string) error {
+		report.Events = append(report.Events, message)
+		if e.Observe != nil {
+			return e.Observe(message)
+		}
+		return nil
+	}
 	original, err := sandbox.Prepare(ctx, repository, commit)
 	if err != nil {
 		return report, err
@@ -82,7 +92,9 @@ func (e Engine) Run(ctx context.Context, repository, commit, issue string) (repo
 	if err != nil {
 		return report, err
 	}
-	note("Running baseline on the pinned commit.")
+	if err = note("Running baseline on the pinned commit."); err != nil {
+		return report, err
+	}
 	baseline, err := e.Tester.TestJSON(ctx, original)
 	report.Baseline = &baseline
 	if err != nil {
@@ -91,7 +103,9 @@ func (e Engine) Run(ctx context.Context, repository, commit, issue string) (repo
 	if baseline.ExitCode != 0 || baseline.Truncated {
 		return report, errors.New("baseline must pass with complete output before proposing a regression")
 	}
-	note("Investigating issue and requesting one regression test from the model.")
+	if err = note("Investigating issue and requesting one regression test from the model."); err != nil {
+		return report, err
+	}
 	proposal, err := e.Provider.Propose(ctx, model.Request{Stage: "regression", Issue: issue, Files: files})
 	if err != nil {
 		return report, fmt.Errorf("regression proposal: %w", err)
@@ -118,7 +132,9 @@ func (e Engine) Run(ctx context.Context, repository, commit, issue string) (repo
 	if reproduction.ExitCode != 1 || reproduction.Truncated || !testEvent(reproduction.Output, "fail", packageName) {
 		return report, errors.New("regression must execute and fail; build errors, skipped tests, and truncated evidence do not qualify")
 	}
-	note("Named regression failed on original code; freezing that test for every repair attempt.")
+	if err = note("Named regression failed on original code; freezing that test for every repair attempt."); err != nil {
+		return report, err
+	}
 	feedback := bounded(reproduction.Output, 16384)
 	for attempt := 1; attempt <= e.MaxAttempts; attempt++ {
 		if err = ctx.Err(); err != nil {
@@ -127,6 +143,9 @@ func (e Engine) Run(ctx context.Context, repository, commit, issue string) (repo
 		inputs := append(append([]model.File(nil), files...), regression)
 		proposed, proposalErr := e.Provider.Propose(ctx, model.Request{Stage: "repair", Issue: issue, Files: inputs, Feedback: feedback})
 		entry := Attempt{Number: attempt, Proposal: proposed}
+		if err = note(fmt.Sprintf("Received repair proposal %d of %d; validating candidate.", attempt, e.MaxAttempts)); err != nil {
+			return report, err
+		}
 		if proposalErr != nil {
 			entry.Error = proposalErr.Error()
 			report.Attempts = append(report.Attempts, entry)
@@ -161,7 +180,9 @@ func (e Engine) Run(ctx context.Context, repository, commit, issue string) (repo
 			report.Patch = fullPatch(files, changes)
 			report.PatchSHA256 = fmt.Sprintf("%x", sha256.Sum256([]byte(report.Patch)))
 			report.Status = "awaiting_review"
-			note("Existing suite and frozen regression passed; patch is ready for human review, not automatically published.")
+			if err = note("Existing suite and frozen regression passed; patch is ready for human review, not automatically published."); err != nil {
+				return report, err
+			}
 			return report, nil
 		}
 		entry.Error = "verification did not pass the full suite and named regression with complete evidence"

@@ -3,6 +3,7 @@ package runs
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -18,6 +19,7 @@ const (
 	Verifying      Status = "verifying"
 	AwaitingReview Status = "awaiting_review"
 	Failed         Status = "failed"
+	Repairing      Status = "repairing"
 )
 
 var ErrNotFound = errors.New("run not found")
@@ -34,15 +36,24 @@ type Evidence struct {
 	Verification string `json:"verification,omitempty"`
 	Patch        string `json:"patch,omitempty"`
 }
+type RepairRequest struct {
+	Repository string `json:"repository"`
+	Commit     string `json:"commit"`
+	Issue      string `json:"issue"`
+	Model      string `json:"model"`
+}
+
 type Run struct {
-	ID        string    `json:"id"`
-	Scenario  string    `json:"scenario"`
-	Status    Status    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Events    []Event   `json:"events"`
-	Evidence  Evidence  `json:"evidence"`
-	Error     string    `json:"error,omitempty"`
+	Repair    *RepairRequest  `json:"repair,omitempty"`
+	Report    json.RawMessage `json:"report,omitempty"`
+	ID        string          `json:"id"`
+	Scenario  string          `json:"scenario"`
+	Status    Status          `json:"status"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
+	Events    []Event         `json:"events"`
+	Evidence  Evidence        `json:"evidence"`
+	Error     string          `json:"error,omitempty"`
 }
 
 func New(scenario string) Run {
@@ -51,7 +62,7 @@ func New(scenario string) Run {
 }
 func (r *Run) Advance(next Status, message string) error {
 	valid := map[Status]Status{Queued: Investigating, Investigating: Reproducing, Reproducing: Editing, Editing: Verifying, Verifying: AwaitingReview}
-	if next != Failed && valid[r.Status] != next {
+	if next != Failed && valid[r.Status] != next && !(r.Status == Investigating && next == Repairing) && !(r.Status == Repairing && next == AwaitingReview) {
 		return fmt.Errorf("invalid transition %s -> %s", r.Status, next)
 	}
 	if r.Status == Failed || r.Status == AwaitingReview {
@@ -71,4 +82,15 @@ type Store interface {
 	Claim(context.Context) (Run, error)
 	Save(context.Context, Run) error
 	Recover(context.Context) error
+}
+
+func NewRepair(request RepairRequest) Run {
+	r := New("")
+	r.Repair = &request
+	r.Events[0].Message = "Model repair queued for configured repository and pinned commit."
+	return r
+}
+func (r *Run) Record(message string) {
+	r.UpdatedAt = time.Now().UTC()
+	r.Events = append(r.Events, Event{r.UpdatedAt, r.Status, message})
 }

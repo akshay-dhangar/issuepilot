@@ -1,13 +1,17 @@
 openapi: 3.0.3
 info:
-  title: IssuePilot local demo API
-  version: 0.1.0
-  description: Trusted, bundled Go fixture only. No arbitrary repositories or autonomous publication.
+  title: IssuePilot repair API
+  version: 0.2.0
+  description: Local single-operator API. Repair mode requires bearer authentication, PostgreSQL, and configured repositories/model. Demo mode remains available. No autonomous publication.
 servers:
   - url: http://127.0.0.1:8080
+security:
+  - bearerAuth: []
+  - {}
 paths:
   /healthz:
     get:
+      security: []
       responses:
         '200':
           description: Process is alive (not a database readiness probe).
@@ -33,6 +37,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Run'
+        '401':
+          description: Missing or invalid token when authentication is configured.
         '400':
           description: Invalid JSON, unknown fields, or unsupported scenario.
         '413':
@@ -48,26 +54,96 @@ paths:
           schema: {type: string}
       responses:
         '200':
-          description: Current run and execution evidence.
+          description: Current run, persisted progress events, and final report. Bearer authentication is required when configured; repair records are never served in unauthenticated demo mode.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Run'
+        '401':
+          description: Missing or invalid token when authentication is configured.
         '404':
           description: Run not found.
         '503':
           description: Persistence unavailable.
+  /v1/repairs:
+    post:
+      summary: Queue a model repair for a configured repository alias
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [repository, commit, issue]
+              properties:
+                repository:
+                  type: string
+                  description: Server-configured alias, never a filesystem path or URL.
+                commit:
+                  type: string
+                  pattern: '^[a-f0-9]{40}$'
+                issue:
+                  type: string
+                  minLength: 1
+                  maxLength: 8192
+                  description: Nonblank UTF-8 text, at most 8192 encoded bytes.
+      responses:
+        '202':
+          description: Persisted in queue. Location identifies the polling resource.
+          headers:
+            Location:
+              schema: {type: string}
+              description: Run resource path.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '400': {description: Invalid payload, unsupported alias, or non-pinned commit.}
+        '401': {description: Missing or invalid bearer token.}
+        '413': {description: Body exceeds 16384 bytes.}
+        '503': {description: Repair mode disabled or persistence unavailable.}
+  /v1/runs/{id}/patch:
+    get:
+      summary: Download a verified repair patch
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Patch whose SHA-256 matches its stored verification report.
+          headers:
+            ETag:
+              schema: {type: string}
+              description: Quoted SHA-256 digest of the returned patch.
+          content:
+            text/x-diff:
+              schema: {type: string}
+        '401': {description: Missing or invalid bearer token.}
+        '404': {description: Run not found.}
+        '409': {description: Run incomplete, no verified patch, or mismatching digest.}
+        '503': {description: Authenticated access not configured or persistence unavailable.}
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     Run:
       type: object
       required: [id, scenario, status, created_at, updated_at, events]
       properties:
         id: {type: string}
-        scenario: {type: string, enum: [empty-average]}
+        scenario: {type: string, enum: [empty-average, '']}
         status:
           type: string
-          enum: [queued, investigating, reproducing, editing, verifying, awaiting_review, failed]
+          enum: [queued, investigating, repairing, reproducing, editing, verifying, awaiting_review, failed]
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
         error: {type: string}
@@ -80,6 +156,18 @@ components:
               at: {type: string, format: date-time}
               status: {type: string}
               message: {type: string}
+        repair:
+          type: object
+          required: [repository, commit, issue, model]
+          properties:
+            repository: {type: string}
+            commit: {type: string}
+            issue: {type: string}
+            model: {type: string}
+        report:
+          type: object
+          additionalProperties: true
+          description: Final agent report, including attempts, model usage, test evidence and patch hashes. Present after execution.
         evidence:
           type: object
           properties:
