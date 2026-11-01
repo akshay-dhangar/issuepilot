@@ -1,0 +1,72 @@
+internal/runner/repair.go
+  s_eb0b26e52cc031::t_8072104e414213 1-51
+.env.example
+  s_eb0b26e52cc031::t_f370c4ff91307d 8-13
+README.md
+  s_eb0b26e52cc031::t_f370c4ff91307d 5-7,21,119-120
+internal/runner/worker_test.go
+  s_90026bd1685103::t_793e51256bbb13 1-65
+  s_eb0b26e52cc031::t_f0f0e9cab29c04 66-79
+docs/REPAIR.md
+  s_eb0b26e52cc031::t_f370c4ff91307d 55
+docs/API.md
+  s_eb0b26e52cc031::t_f370c4ff91307d 1-75
+PROGRESS.md
+  s_90026bd1685103::t_d83dc15af09e18 5-6,35-42,45
+internal/config/config.go
+  s_90026bd1685103::t_793e51256bbb13 1-55
+internal/httpapi/repair_test.go
+  s_90026bd1685103::t_793e51256bbb13 1-84
+cmd/server/main.go
+  s_90026bd1685103::t_793e51256bbb13 6-7,9,12,30-42,58,67,71,74
+internal/runner/worker.go
+  s_eb0b26e52cc031::t_8072104e414213 12-14,32-45,49-54,57-62
+internal/runs/model.go
+  s_eb0b26e52cc031::t_8072104e414213 6,22,39-45,47-56,65,86-96
+internal/agent/agent.go
+  s_eb0b26e52cc031::t_8072104e414213 50,59-61,75-81,95-97,106-108,135-137,146-148,183-185
+internal/httpapi/api.go
+  s_eb0b26e52cc031::t_8072104e414213 12-14,68-71,74-75
+internal/httpapi/repair.go
+  s_90026bd1685103::t_793e51256bbb13 6,101-105,110
+  s_eb0b26e52cc031::t_8072104e414213 1-5,7-100,106-109,111-132
+internal/runs/memory.go
+  s_eb0b26e52cc031::t_8072104e414213 15-23
+api/openapi.yaml
+  s_90026bd1685103::t_d83dc15af09e18 8-10,14,40-41
+  s_eb0b26e52cc031::t_f370c4ff91307d 3-5,57,62-63,68-131,133-136,143,146,159-170
+internal/runs/store_test.go
+  s_eb0b26e52cc031::t_f0f0e9cab29c04 102-136
+internal/config/config_test.go
+  s_90026bd1685103::t_793e51256bbb13 1-40
+.github/workflows/ci.yml
+  s_90026bd1685103::t_9a7d25d308b65e 30,33
+internal/agent/agent_test.go
+  s_eb0b26e52cc031::t_1c4b3aa742717f 182-192
+internal/integration/repair_test.go
+  s_eb0b26e52cc031::t_79d383a03d0383 1-182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "a49221de35f4d9d091ab6d804d5929fa78dc4410",
+  "prompts": {},
+  "sessions": {
+    "s_90026bd1685103": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "01a187ba-22aa-7793-8324-39d8f75719e0",
+        "model": "unknown"
+      },
+      "human_author": "Akshay Dhangar <48667712+akshay-dhangar@users.noreply.github.com>"
+    },
+    "s_eb0b26e52cc031": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a187ba-22aa-7793-8324-39d8f75719e0",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Akshay Dhangar <48667712+akshay-dhangar@users.noreply.github.com>"
+    }
+  }
+}
