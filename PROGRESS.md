@@ -2,6 +2,7 @@
 
 ## Implemented
 
+- Model repair CLI with an OpenAI Responses provider, structured proposals, frozen regression, at most two repair attempts, and local evidence/patch artifacts.
 - Go HTTP API with an OpenAPI contract and strict input validation.
 - Explicit run state machine and asynchronous worker.
 - In-memory demo mode and PostgreSQL persistence.
@@ -22,12 +23,19 @@
 - A deliberately failing container test produced the expected failure, and a timed-out run left no runner container behind.
 - The actual CLI exported a committed fixture and returned successful JSON evidence with the matching commit and immutable image digest.
 
+## Model-loop milestone verification
+
+- Provider contract tested against a fake HTTP server: request configuration, structured parsing, refusals, incomplete responses, oversized responses, cancellation, and redacted upstream errors.
+- Workflow tests cover baseline failure, actual named regression failure, root-package identity, protected-file rejection, bounded retries, frozen regression, and applicable patch output.
+- Real Docker test reproduced an empty-input panic, verified a scripted model fix, applied the exported patch to a disposable repository, and re-tested the delivered artifact.
+- No live model call was made: OPENAI_API_KEY was not configured. Scripted model responses are test doubles, not evidence of model quality.
+
 ## Next milestone
 
-Model-provider interface and bounded investigation/edit/verify loop, operating on the isolated runner. Tests should independently establish whether the proposed fix addresses the reported issue; model claims are not verification.
+Live-model evaluation on curated cases, followed by exposing the verified repair workflow through durable API jobs and a review UI. Independent evaluation cases and human review remain necessary.
 
 ## Not implemented yet
 
-Model-generated patches, remote repository acquisition, dedicated runner VMs, automatic checkpoint continuation, cancellation API, GitHub App and draft-PR publication, Next.js dashboard, SSE, sqlc, and versioned database migrations.
+Live-provider verification, remote repository acquisition, dedicated runner VMs, automatic checkpoint continuation, cancellation API, GitHub App and draft-PR publication, Next.js dashboard, SSE, sqlc, and versioned database migrations.
 
-The HTTP demo patch is deterministic. The CLI tests selected local source without modifying it. Neither should be presented as an AI-generated fix. No recurring automation is configured.
+The HTTP demo is still deterministic. The repair CLI is model-backed, but local/CI verification uses scripted model responses. All repository changes are made in disposable snapshots and emitted as reviewable patches; the selected repository stays unchanged. No recurring automation is configured.

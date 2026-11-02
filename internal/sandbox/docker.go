@@ -34,7 +34,17 @@ type Docker struct {
 
 // Test runs a prepared snapshot. Only dependency-free or vendored Go modules
 // work offline. Repository code never runs in a host process.
-func (d Docker) Test(ctx context.Context, s Snapshot) (result Result, err error) {
+func (d Docker) Test(ctx context.Context, s Snapshot) (Result, error) {
+	return d.test(ctx, s, false)
+}
+
+// TestJSON emits Go test events so callers can distinguish actual test failures
+// from compilation errors and require the named regression to execute.
+func (d Docker) TestJSON(ctx context.Context, s Snapshot) (Result, error) {
+	return d.test(ctx, s, true)
+}
+
+func (d Docker) test(ctx context.Context, s Snapshot, jsonOutput bool) (result Result, err error) {
 	if !imagePattern.MatchString(d.Image) {
 		return result, errors.New("image must be golang@sha256:<64 lowercase hex characters>")
 	}
@@ -54,6 +64,9 @@ func (d Docker) Test(ctx context.Context, s Snapshot) (result Result, err error)
 	}
 	name := "issuepilot-" + strings.ToLower(rand.Text())
 	result = Result{Commit: s.Commit, Image: d.Image, Command: []string{"go", "test", "-count=1", "-p=2", "-timeout=60s", "./..."}, ExitCode: -1}
+	if jsonOutput {
+		result.Command = append(result.Command[:2], append([]string{"-json"}, result.Command[2:]...)...)
+	}
 	started := time.Now()
 	defer func() { result.DurationMS = time.Since(started).Milliseconds() }()
 	// Create first, then start, so timeout cleanup cannot race container creation.
