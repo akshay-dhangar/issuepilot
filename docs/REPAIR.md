@@ -52,7 +52,7 @@ git -C /path/to/repository apply /absolute/path/to/run-001/patch.diff
 - Model refusals, incomplete outputs, malformed proposals, and infrastructure failures stop the workflow. Upstream error bodies are not logged.
 - Test and source proposals are untrusted. They run only in Docker and remain subject to the development-runner limits in RUNNER.md. Use dedicated stronger isolation before offering this publicly.
 - The regression is model-generated, not an independent correctness oracle. A passing test is evidence, not proof that a patch solves the issue; human review and independent benchmark cases remain necessary.
-- Reports are local artifacts. Durable server jobs, cancellation API, streamed UI, tool-driven repository search, and GitHub publication are not part of this CLI milestone.
+- Reports are local artifacts. The [durable repair API](API.md) also exposes this engine. Cancellation API, streamed UI, tool-driven repository search, and GitHub publication remain future work.
 
 ## Verify
 

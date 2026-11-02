@@ -179,3 +179,14 @@ func TestDockerModelLoop(t *testing.T) {
 		t.Fatalf("patch did not change source: %v %s", err, out)
 	}
 }
+
+func TestProgressPersistenceFailureStopsModelWork(t *testing.T) {
+	dir, sha := fixture(t)
+	provider := &scriptedProvider{}
+	tester := &scriptedTester{}
+	engine := Engine{Provider: provider, Tester: tester, MaxAttempts: 2, Observe: func(string) error { return fmt.Errorf("storage unavailable") }}
+	report, err := engine.Run(context.Background(), dir, sha, "fix")
+	if err == nil || len(provider.requests) != 0 || tester.calls != 0 || report.Status != "failed" || report.Patch != "" {
+		t.Fatal("work continued after failed progress persistence")
+	}
+}

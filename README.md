@@ -2,7 +2,9 @@
 
 A Go-based issue-to-PR assistant, starting with an honest, executable workflow foundation.
 
-**Current status: model-driven repair CLI, isolated repository runner, and deterministic HTTP demo.** The bundled fixture reproduces a divide-by-zero bug, applies a known patch, and runs real Go tests. A separate CLI can test a pinned commit from an explicitly selected local Go repository in Docker. The new repair CLI integrates the OpenAI Responses API, proposes a regression and bounded source edits, verifies them in Docker, and exports a patch for review. The provider has been tested with mocked HTTP responses; a live model run is not yet verified. GitHub App publication is not implemented.
+**Current status: authenticated durable repair API, model-driven repair CLI, isolated repository runner, and deterministic demo.** The bundled fixture reproduces a divide-by-zero bug, applies a known patch, and runs real Go tests. A separate CLI can test a pinned commit from an explicitly selected local Go repository in Docker. The new repair CLI integrates the OpenAI Responses API, proposes a regression and bounded source edits, verifies them in Docker, and exports a patch for review. The provider has been tested with mocked HTTP responses; a live model run is not yet verified. GitHub App publication is not implemented.
+
+See [the durable API guide](docs/API.md) for authenticated submission, progress polling, and patch downloads.
 
 See [the model repair guide](docs/REPAIR.md) for the new workflow.
 
@@ -16,7 +18,7 @@ Requirements: Go 1.25+. Docker is optional for PostgreSQL.
 go run ./cmd/server
 ```
 
-The server binds to `127.0.0.1:8080`. Without `DATABASE_URL`, runs live in memory and disappear on restart. There is no authentication; keep this prototype bound to localhost.
+The server binds to `127.0.0.1:8080`. Without `DATABASE_URL`, runs live in memory and disappear on restart. This default is demo-only mode. Repair mode requires PostgreSQL, an API token, a model/key, and a repository allowlist; see the API guide. Keep the service bound to localhost.
 
 In a second terminal:
 
@@ -114,7 +116,8 @@ Tests cover invalid request bodies, missing runs, state-transition guards, concu
 - [x] Model-provider interface and bounded regression/repair/verify loop for root Go packages.
 - [ ] Live-model evaluation and tool-driven repository exploration.
 - [ ] Independent verification tests and a reproducible evaluation suite.
-- [ ] Durable checkpoints, cancellation API, idempotency keys, queue admission limits.
+- [x] Durable repair jobs, authenticated polling, final reports, and verified patch downloads.
+- [ ] Resumable checkpoints, cancellation API, idempotency keys, queue admission limits.
 - [ ] GitHub App, review tied to the exact patch/base commit, idempotent draft-PR publication.
 - [ ] Next.js dashboard, streamed progress, evidence and diff review.
 - [ ] Java/Maven/JUnit target repositories.

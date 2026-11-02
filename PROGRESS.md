@@ -2,6 +2,8 @@
 
 ## Implemented
 
+- Authenticated durable repair API: configured repository aliases/model, persisted progress/report data, and integrity-checked patch downloads.
+
 - Model repair CLI with an OpenAI Responses provider, structured proposals, frozen regression, at most two repair attempts, and local evidence/patch artifacts.
 - Go HTTP API with an OpenAPI contract and strict input validation.
 - Explicit run state machine and asynchronous worker.
@@ -30,9 +32,17 @@
 - Real Docker test reproduced an empty-input panic, verified a scripted model fix, applied the exported patch to a disposable repository, and re-tested the delivered artifact.
 - No live model call was made: OPENAI_API_KEY was not configured. Scripted model responses are test doubles, not evidence of model quality.
 
+## Durable API milestone verification
+
+- Auth, allowlist/input validation, protected historical reports, digest integrity, worker dispatch and deep-copy isolation tests passed.
+- A real HTTP → worker → Docker → PostgreSQL test completed a repair with scripted model responses, then reopened the database and verified the report content and exact patch were preserved.
+- PostgreSQL tests cover single-worker ownership, interrupted-run recovery, and queued repair persistence.
+- A failed progress save stops work before model execution. Disabled/changed execution configuration is rejected.
+- API key remains unconfigured; no live provider call was made.
+
 ## Next milestone
 
-Live-model evaluation on curated cases, followed by exposing the verified repair workflow through durable API jobs and a review UI. Independent evaluation cases and human review remain necessary.
+Review dashboard for job progress, execution evidence, and patch inspection, plus live-model evaluation on curated cases. Independent evaluation cases and human review remain necessary.
 
 ## Not implemented yet
 

@@ -3,9 +3,13 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/akshay-dhangar/issuepilot/internal/agent"
+	"github.com/akshay-dhangar/issuepilot/internal/config"
 	"github.com/akshay-dhangar/issuepilot/internal/httpapi"
+	"github.com/akshay-dhangar/issuepilot/internal/model"
 	"github.com/akshay-dhangar/issuepilot/internal/runner"
 	"github.com/akshay-dhangar/issuepilot/internal/runs"
+	"github.com/akshay-dhangar/issuepilot/internal/sandbox"
 	"log/slog"
 	"net/http"
 	"os"
@@ -23,6 +27,19 @@ func main() {
 func serve() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	settings, err := config.Read(os.Getenv)
+	if err != nil {
+		return err
+	}
+	var executor runner.Executor
+	if settings.Enabled {
+		provider, e := model.NewOpenAI(os.Getenv("OPENAI_API_KEY"), settings.Model)
+		if e != nil {
+			return e
+		}
+		repair := runner.RepairExecutor{Engine: agent.Engine{Provider: provider, Tester: sandbox.Docker{Image: sandbox.DefaultImage, Timeout: 2 * time.Minute}, MaxAttempts: 2}, Repositories: settings.Repositories, Model: settings.Model}
+		executor = repair.Execute
+	}
 	var store runs.Store = runs.NewMemory()
 	if url := os.Getenv("DATABASE_URL"); url != "" {
 		startup, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -38,7 +55,7 @@ func serve() error {
 		slog.Warn("ephemeral demo mode: runs disappear on restart; set DATABASE_URL for persistence")
 	}
 	recoverCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	err := store.Recover(recoverCtx)
+	err = store.Recover(recoverCtx)
 	cancel()
 	if err != nil {
 		return err
@@ -47,14 +64,14 @@ func serve() error {
 	if addr == "" {
 		addr = "127.0.0.1:8080"
 	}
-	server := &http.Server{Addr: addr, Handler: httpapi.Handler(store), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
+	server := &http.Server{Addr: addr, Handler: httpapi.HandlerWithOptions(store, httpapi.Options{Token: settings.Token, RepairEnabled: settings.Enabled, Repositories: settings.Repositories, Model: settings.Model}), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
 	workerCtx, workerCancel := context.WithCancel(ctx)
 	defer workerCancel()
 	workerDone := make(chan error, 1)
-	go func() { workerDone <- runner.Work(workerCtx, store) }()
+	go func() { workerDone <- runner.Work(workerCtx, store, executor) }()
 	serverDone := make(chan error, 1)
 	go func() {
-		slog.Info("IssuePilot local demo listening", "address", addr)
+		slog.Info("IssuePilot listening", "address", addr)
 		serverDone <- server.ListenAndServe()
 	}()
 	var result error

@@ -12,7 +12,15 @@ type Memory struct {
 }
 
 func NewMemory() *Memory { return &Memory{rows: map[string]Run{}} }
-func clone(r Run) Run    { r.Events = append([]Event(nil), r.Events...); return r }
+func clone(r Run) Run {
+	r.Events = append([]Event(nil), r.Events...)
+	r.Report = append([]byte(nil), r.Report...)
+	if r.Repair != nil {
+		request := *r.Repair
+		r.Repair = &request
+	}
+	return r
+}
 func (m *Memory) Create(_ context.Context, r Run) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()

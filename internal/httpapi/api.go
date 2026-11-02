@@ -9,7 +9,9 @@ import (
 	"net/http"
 )
 
-func Handler(store runs.Store) http.Handler {
+func Handler(store runs.Store) http.Handler { return HandlerWithOptions(store, Options{}) }
+
+func HandlerWithOptions(store runs.Store, options Options) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { reply(w, 200, map[string]string{"status": "ok"}) })
 	mux.HandleFunc("POST /v1/runs", func(w http.ResponseWriter, r *http.Request) {
@@ -63,9 +65,14 @@ func Handler(store runs.Store) http.Handler {
 			reply(w, 503, map[string]string{"error": "storage unavailable"})
 			return
 		}
+		if run.Repair != nil && options.Token == "" {
+			reply(w, 503, map[string]string{"error": "authenticated access must be configured"})
+			return
+		}
 		reply(w, 200, run)
 	})
-	return mux
+	registerRepairs(mux, store, options)
+	return authenticate(mux, options.Token)
 }
 func reply(w http.ResponseWriter, status int, body any) {
 	w.Header().Set("Content-Type", "application/json")
