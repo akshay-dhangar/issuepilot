@@ -1,3 +1,6 @@
 .env
 bin/
 coverage.out
+
+# Disposable source snapshots; never publish these.
+.issuepilot/
